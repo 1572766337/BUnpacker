@@ -45,6 +45,7 @@ def CheckEnv():
         tmp_name = re.findall("launchable-activity: name='([^']+)'",line)
         if tmp_name:
             START_ACTIVITY = tmp_name[0]
+    fxml.close()
 
 def Dump():
     print '[*] Dump dex'
