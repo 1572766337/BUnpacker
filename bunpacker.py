@@ -2,7 +2,7 @@
 import sys,shutil
 reload(sys)
 sys.setdefaultencoding('utf-8')
-import os,time,zipfile
+import os,re,time
 from xml.dom import minidom
 
 PACKAGE_NAME = ''
@@ -31,26 +31,20 @@ def CheckEnv():
     print '[*] Target: '+CPU
     print '[---------------------------------------]'
     os.popen('adb push ext-tools/' + CPU + '/bulib /data/local/tmp')
+    os.popen('adb shell chmod 755 /data/local/tmp/bulib')
     os.popen('adb install ' + APK_PATH)
     print '[---------------------------------------]'
     #获取包信息备用
     print '[*] Get package info'
-    nxml = open('tmp/nxml.xml','w')
-    zf = zipfile.ZipFile(APK_PATH, 'r')
-    content = zf.read('AndroidManifest.xml')
-    nxml.write(content)
-    nxml.close()
-    content = os.popen('java -jar ext-tools/AXMLPrinter2.jar tmp/nxml.xml').read()
-    mfest = minidom.parseString(content)
-    manifest = mfest.getElementsByTagName('manifest')
-    activities = mfest.getElementsByTagName("activity")
-    for node in manifest:
-        PACKAGE_NAME = node.getAttribute("package")
-    for activity in activities:
-            for sitem in activity.getElementsByTagName("action"):
-                val = sitem.getAttribute("android:name")
-                if val == "android.intent.action.MAIN" :
-                    START_ACTIVITY = activity.getAttribute("android:name")
+    os.popen('aapt dump badging ' + APK_PATH + '>>tmp/nxml.xml')
+    fxml = open('tmp/nxml.xml')
+    for line in fxml:
+        tmp_name = re.findall("package: name='([^']+)'",line)
+        if tmp_name:
+            PACKAGE_NAME = tmp_name[0]
+        tmp_name = re.findall("launchable-activity: name='([^']+)'",line)
+        if tmp_name:
+            START_ACTIVITY = tmp_name[0]
 
 def Dump():
     print '[*] Dump dex'
